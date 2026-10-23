@@ -14,7 +14,7 @@ def parse_time(alert):
     return datetime.fromisoformat(alert["timestamp_utc"])
 
 
-def make_incident(host, process, evidence_type, events):
+def make_incident(host, process, evidence_type, source_ip, events):
     simulated = evidence_type == "SIMULATED_TEST_EVENT"
     return {
         "incident_type": "REPEATED_AUTH_FAILURE_PATTERN",
@@ -22,6 +22,7 @@ def make_incident(host, process, evidence_type, events):
         "evidence_type": evidence_type,
         "host": host,
         "process": process,
+        "source_ip": source_ip,
         "event_count": len(events),
         "first_seen_utc": events[0]["timestamp_utc"],
         "last_seen_utc": events[-1]["timestamp_utc"],
@@ -46,13 +47,14 @@ def correlate_alerts(alerts, window_minutes=WINDOW_MINUTES,
             alert.get("host", "unknown"),
             alert.get("process", "unknown"),
             alert.get("evidence_type", "unknown"),
+            alert.get("source_ip"),
         )
         groups[key].append(alert)
 
     incidents = []
     window = timedelta(minutes=window_minutes)
 
-    for (host, process, evidence_type), events in groups.items():
+    for (host, process, evidence_type, source_ip), events in groups.items():
         events.sort(key=parse_time)
         current = []
 
@@ -60,14 +62,14 @@ def correlate_alerts(alerts, window_minutes=WINDOW_MINUTES,
             if current and parse_time(event) - parse_time(current[0]) > window:
                 if len(current) >= threshold:
                     incidents.append(
-                        make_incident(host, process, evidence_type, current)
+                        make_incident(host, process, evidence_type, source_ip, current)
                     )
                 current = []
             current.append(event)
 
         if len(current) >= threshold:
             incidents.append(
-                make_incident(host, process, evidence_type, current)
+                make_incident(host, process, evidence_type, source_ip, current)
             )
 
     return incidents
