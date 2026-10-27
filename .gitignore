@@ -7,3 +7,19 @@ incidents.json
 incidents.csv
 *.log
 .env
+webapp/instance/
+
+# Local DNS capture data
+network_events.jsonl
+
+# Local backup and pre-fix files
+backups/
+*.backup*
+*.pre_ip_fix
+
+# Timestamped backup files
+*.bak-*
+
+# Local alert recovery artifacts
+alerts.jsonl.pre-repair-*
+alerts.recovered.jsonl

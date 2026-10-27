@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TraceForge | Evidence Integrity</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body><main class="main" style="margin:0 auto;max-width:1200px">
+<header class="topbar"><div><p class="eyebrow">EVIDENCE VALIDATION</p><h1>SHA-256 integrity check</h1></div><a class="button-link" href="{{ url_for('dashboard') }}">← Dashboard</a></header>
+<section class="welcome-row"><div><h2>Status: {{ result.status }}</h2><p class="muted">{{ result.message }}</p></div></section>
+<section class="panel"><div class="table-wrap"><table><thead><tr><th>FILE</th><th>STATUS</th><th>BASELINE SHA-256</th><th>CURRENT SHA-256</th></tr></thead><tbody>
+{% for item in result['items'] %}<tr><td>{{ item.file }}</td><td>{{ item.status }}</td><td style="white-space:normal;word-break:break-all">{{ item.expected_sha256 or '—' }}</td><td style="white-space:normal;word-break:break-all">{{ item.current_sha256 or '—' }}</td></tr>{% else %}<tr><td colspan="4" class="empty">No baseline has been created.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% if result.status == 'NO_BASELINE' %}<section class="panel"><div class="panel-heading"><div><h2>Create initial baseline</h2><p class="muted">Review the current evidence before doing this. Existing baselines are never overwritten by this button.</p></div><form method="post" action="{{ url_for('integrity_baseline') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button-secondary" type="submit">Create baseline</button></form></div></section>{% endif %}
+<p class="footnote">A local manifest detects changes relative to its baseline, but an administrator able to alter both files may defeat this check. For stronger chain of custody, store signed manifests or copies on a separate trusted system.</p></main></body></html>

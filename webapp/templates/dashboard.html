@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>TraceForge | SOC Console</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">TF</span><span>TraceForge<small>SECURITY CONSOLE</small></span></a>
+    <div class="nav-label">WORKSPACE</div>
+    <a class="nav-item active" href="{{ url_for('dashboard') }}">▦ &nbsp; Overview</a>
+    <a class="nav-item" href="#incidents">◈ &nbsp; Incidents</a>
+    <a class="nav-item" href="#alerts">⌁ &nbsp; Alert stream</a>
+    <a class="nav-item" href="{{ url_for('analysis_page') }}">⌁ &nbsp; AI Risk Analysis</a>
+    <a class="nav-item" href="{{ url_for('integrity_page') }}">◇ &nbsp; Evidence Integrity</a>
+    <div class="sidebar-bottom"><span class="status-dot"></span> Local monitoring<br><small>Read-only investigation mode</small></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div><p class="eyebrow">SECURITY OPERATIONS CENTER</p><h1>Investigation overview</h1></div>
+      <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="button-secondary" type="submit">Sign out ↗</button>
+      </form>
+    </header>
+
+    <section class="welcome-row">
+      <div><h2>TraceForge monitor</h2><p class="muted">Evidence-backed visibility into your local security events.</p></div>
+      <span class="live-pill"><span class="status-dot"></span> DASHBOARD ONLINE</span>
+    </section>
+
+    <section class="metrics" aria-label="Monitoring summary">
+      <article class="metric"><p>INCIDENTS</p><strong id="incident-count">{{ data.incident_count }}</strong><span class="metric-note">From incidents.json</span></article>
+      <article class="metric"><p>ALERT RECORDS</p><strong id="alert-count">{{ data.alert_count }}</strong><span class="metric-note">From alerts.jsonl</span></article>
+      <article class="metric"><p>OBSERVED HOSTS</p><strong id="host-count">{{ data.host_count }}</strong><span class="metric-note">Distinct host labels</span></article>
+      <article class="metric"><p>SOURCE ADDRESSES</p><strong id="source-count">{{ data.source_count }}</strong><span class="metric-note">Known source IPs</span></article>
+    </section>
+
+
+    <section class="tf-visuals" id="tf-visuals">
+      <article class="tf-panel tf-map-panel">
+        <div class="tf-panel-head">
+          <div><p class="eyebrow">LOCAL SECURITY OBSERVABILITY</p>
+          <h2>Network activity canvas</h2></div>
+          <span class="live-pill"><span class="status-dot"></span> VISUALIZER ACTIVE</span>
+        </div>
+        <div class="tf-canvas-wrap">
+          <canvas id="tf-network-canvas" aria-label="Animated illustrative network visualization"></canvas>
+          <div class="tf-canvas-overlay">
+            <span class="tf-mini-label">TRACEFORGE / LOCAL VIEW</span>
+            <span class="tf-scan-line"></span>
+            <span class="tf-canvas-caption">Animated visual preview · not captured traffic</span>
+          </div>
+        </div>
+        <div class="tf-map-legend">
+          <span><i class="legend-cyan"></i> Monitor</span>
+          <span><i class="legend-purple"></i> Visual signal</span>
+          <span><i class="legend-green"></i> System status</span>
+        </div>
+      </article>
+      <article class="tf-panel tf-activity-panel">
+        <div class="tf-panel-head">
+          <div><p class="eyebrow">SYSTEM PULSE</p><h2>Live interface status</h2></div>
+          <span class="tf-pulse-ring" aria-hidden="true"></span>
+        </div>
+        <div class="tf-status-block">
+          <span class="tf-status-icon">01</span>
+          <div><strong>Dashboard service</strong><small>Periodic API refresh enabled</small></div>
+          <span class="tf-status-ok">READY</span>
+        </div>
+        <div class="tf-status-block">
+          <span class="tf-status-icon purple">02</span>
+          <div><strong>Evidence pipeline</strong><small>Local evidence files</small></div>
+          <span class="tf-status-ok">LOCAL</span>
+        </div>
+        <div class="tf-status-block">
+          <span class="tf-status-icon blue">03</span>
+          <div><strong>Visualization engine</strong><small>Canvas animation</small></div>
+          <span class="tf-status-ok">ACTIVE</span>
+        </div>
+        <div class="tf-signal-box">
+          <span class="tf-signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <p>Interface activity</p>
+          <small>Decorative animation, not a traffic measurement</small>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel" id="dns-events">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">LIVE NETWORK TELEMETRY</p>
+          <h2>DNS Events</h2>
+        </div>
+        <span class="tag" id="dns-event-count">{{ data.network_events|length }} EVENTS</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>TIME (UTC)</th>
+              <th>EVENT</th>
+              <th>DOMAIN</th>
+              <th>QUERY TYPE</th>
+              <th>SOURCE</th>
+              <th>DESTINATION</th>
+            </tr>
+          </thead>
+          <tbody id="dns-event-rows">
+            {% for event in data.network_events|reverse %}
+            <tr>
+              <td>{{ event.timestamp_utc|default("—") }}</td>
+              <td><span class="tag">{{ event.event_type|default("DNS") }}</span></td>
+              <td>{{ event.domain|default("—") }}</td>
+              <td>{{ event.query_type|default("—") }}</td>
+              <td>{{ event.source_ip|default("—") }}</td>
+              <td>{{ event.destination_ip|default("—") }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="empty">No DNS metadata captured yet. Start the DNS monitor.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="footnote">Real packet metadata from tshark · DNS names and endpoints only · Not full packet payloads</p>
+    </section>
+
+    <section class="panel" id="incidents">
+      <div class="panel-heading"><div><p class="eyebrow">INVESTIGATION QUEUE</p><h2>Recent incidents</h2></div><a class="button-link" href="{{ url_for('export_csv') }}">Export CSV ↓</a></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>HOST</th><th>PROCESS</th><th>SOURCE IP</th><th>EVIDENCE TYPE</th><th>EVENT RECORDS</th></tr></thead>
+        <tbody id="incident-rows">
+        {% for item in data.incidents|reverse %}
+          <tr>
+            <td>{{ item.get('host', item.get('hostname', '—')) }}</td>
+            <td>{{ item.get('process', '—') }}</td>
+            <td>{{ item.get('source_ip', item.get('src_ip', '—')) or '—' }}</td>
+            <td><span class="tag">{{ item.get('evidence_type', item.get('type', 'UNCLASSIFIED')) }}</span></td>
+            <td>{{ item.get('event_count', (item.get('events', [])|length) if item.get('events') is sequence and item.get('events') is not string else '—') }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="empty">No incident records found. Run TraceForge analysis to populate incidents.json.</td></tr>
+        {% endfor %}
+        </tbody></table>
+      </div>
+      <p class="footnote">Record count is not the same as unique login attempts. Validate the underlying evidence before drawing conclusions.</p>
+    </section>
+
+    <section class="panel" id="alerts">
+      <div class="panel-heading"><div><p class="eyebrow">RAW TELEMETRY</p><h2>Latest alert records</h2></div><span class="muted">Up to 500 records</span></div>
+      <div class="alert-list" id="alert-list">
+      {% for item in data.alerts|reverse %}
+        <article class="alert-item">
+          <span class="alert-indicator"></span>
+          <div class="alert-content"><strong>{{ item.get('evidence_type', item.get('rule', item.get('event_type', 'Security event'))) }}</strong><p>{{ item.get('timestamp', item.get('time', 'Timestamp unavailable')) }} · {{ item.get('process', 'unknown process') }} · {{ item.get('source_ip', 'source IP unavailable') }}</p></div>
+        </article>
+      {% else %}
+        <p class="empty">No alert records found in alerts.jsonl.</p>
+      {% endfor %}
+      </div>
+    </section>
+    <footer>TraceForge · Evidence first · <span id="refresh-status">Loaded {{ data.updated_at }}</span></footer>
+  </main>
+</body>
+</html>

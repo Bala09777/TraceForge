@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TraceForge | Risk Analysis</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body><main class="main" style="margin:0 auto;max-width:1400px">
+<header class="topbar"><div><p class="eyebrow">TRIAGE ASSISTANCE</p><h1>Explainable anomaly analysis</h1></div><a class="button-link" href="{{ url_for('dashboard') }}">← Dashboard</a></header>
+<section class="welcome-row"><div><h2>{{ result.incident_count }} incidents evaluated</h2><p class="muted">Method: {{ result.method }} · Generated {{ result.generated_at }}</p></div><a class="button-link" href="{{ url_for('export_analysis') }}">Export JSON ↓</a></section>
+<section class="panel"><div class="panel-heading"><div><p class="eyebrow">MODEL LIMITATIONS</p><h2>Risk is a review priority, not proof</h2></div></div><p class="footnote">{{ result.disclaimer }} Scores depend on available records and are not calibrated probabilities.</p></section>
+<section class="panel"><div class="table-wrap"><table><thead><tr><th>HOST</th><th>PROCESS</th><th>SOURCE IP</th><th>RISK</th><th>EXPLANATION</th></tr></thead><tbody>
+{% for item in result.incidents %}<tr><td>{{ item.get('host', item.get('hostname', '—')) }}</td><td>{{ item.get('process', '—') }}</td><td>{{ item.get('source_ip', item.get('src_ip', '—')) or '—' }}</td><td><span class="tag">{{ item.risk_band }} · {{ item.risk_score }}</span></td><td>{{ item.risk_reasons|join('; ') }}</td></tr>
+{% else %}<tr><td colspan="5" class="empty">No incident records available for analysis.</td></tr>{% endfor %}
+</tbody></table></div></section><p class="muted">Analysis method: {{ result.method }}. Optional ML library available: {{ result.ml_library_available }}.</p></main></body></html>
