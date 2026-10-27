@@ -14,7 +14,7 @@ def main():
         )
 
     host = os.environ.get("TRACEFORGE_BIND", "127.0.0.1")
-    port = int(os.environ.get("TRACEFORGE_PORT", "5050"))
+    port = int(os.environ.get("TRACEFORGE_PORT", os.environ.get("PORT", "5050")))
 
     if not 1 <= port <= 65535:
         raise SystemExit("TRACEFORGE_PORT must be between 1 and 65535.")

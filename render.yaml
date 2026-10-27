@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: traceforge
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python webapp/run.py
+    healthCheckPath: /login
+    envVars:
+      - key: TRACEFORGE_BIND
+        value: 0.0.0.0
+      - key: TRACEFORGE_HTTPS
+        value: "1"
+      - key: TRACEFORGE_SECRET_KEY
+        generateValue: true
+      - key: TRACEFORGE_PASSWORD_HASH
+        sync: false
