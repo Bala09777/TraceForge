@@ -152,13 +152,42 @@
     </section>
 
     <section class="panel" id="alerts">
-      <div class="panel-heading"><div><p class="eyebrow">RAW TELEMETRY</p><h2>Latest alert records</h2></div><span class="muted">Up to 500 records</span></div>
+      <div class="panel-heading"><div><p class="eyebrow">INVESTIGATION VIEW</p><h2>Latest alert records</h2></div><span class="muted">Up to 500 records</span></div>
       <div class="alert-list" id="alert-list">
       {% for item in data.alerts|reverse %}
-        <article class="alert-item">
-          <span class="alert-indicator"></span>
-          <div class="alert-content"><strong>{{ item.get('evidence_type', item.get('rule', item.get('event_type', 'Security event'))) }}</strong><p>{{ item.get('timestamp', item.get('time', 'Timestamp unavailable')) }} · {{ item.get('process', 'unknown process') }} · {{ item.get('source_ip', 'source IP unavailable') }}</p></div>
-        </article>
+        <details class="alert-item alert-investigation">
+          <summary class="alert-summary">
+            <span class="alert-indicator"></span>
+            <div class="alert-content">
+              <strong>{{ item.get('alert_type', item.get('evidence_type', item.get('rule', item.get('event_type', 'Security event')))) }}</strong>
+              <p>{{ item.get('timestamp', item.get('time', 'Timestamp unavailable')) }} · {{ item.get('domain', item.get('process', 'Process/domain unavailable')) }}</p>
+            </div>
+            <span class="tag">{{ item.get('severity', 'unclassified')|upper }}</span>
+            <span class="muted alert-expand-label">View details</span>
+          </summary>
+          <div class="alert-details">
+            <p><strong>Domain / Host:</strong> {{ item.get('domain', item.get('host', item.get('hostname', 'Not recorded'))) }}</p>
+            <p><strong>Source IP:</strong> {{ item.get('source_ip', item.get('src_ip', 'Not recorded')) }}</p>
+            <p><strong>Process:</strong> {{ item.get('process', 'Not recorded') }}</p>
+            <p><strong>Timestamp:</strong> {{ item.get('timestamp', item.get('time', 'Not recorded')) }}</p>
+            <p><strong>Evidence type:</strong> {{ item.get('evidence_type', 'Not recorded') }}</p>
+            <p><strong>Evidence origin:</strong> {{ 'Simulated/test evidence' if item.get('simulated') is sameas true else ('Live evidence' if item.get('simulated') is sameas false else 'Not classified') }}</p>
+            <p><strong>Detection reason:</strong> {{ item.get('reason', item.get('details', {}).get('reason', 'No reason recorded')) }}</p>
+            {% if item.get('details') is mapping and item.get('details') %}
+            <div class="alert-detail-box">
+              <strong>Detection details</strong>
+              {% for key, value in item.get('details').items() %}
+              <p><strong>{{ key|replace('_', ' ')|title }}:</strong> {{ value }}</p>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if item.get('recommended_action') or item.get('recommendation') %}
+            <p><strong>Recommended action:</strong> {{ item.get('recommended_action', item.get('recommendation')) }}</p>
+            {% else %}
+            <p class="muted"><strong>Next step:</strong> Validate the domain and supporting DNS evidence before deciding whether this is suspicious. High entropy alone does not prove malicious activity.</p>
+            {% endif %}
+          </div>
+        </details>
       {% else %}
         <p class="empty">No alert records found in alerts.jsonl.</p>
       {% endfor %}
